@@ -121,15 +121,15 @@ class Fish {
     this.vy = 0;
 
     if (!isPlayer) {
-      // 小型鱼速度再提升 10% (从 2.38 提升至 2.618)，大型鱼维持 0.72
+      // 小型鱼速度降低 10% (从 2.618 降至 2.356)，大型鱼维持 0.72
       const sizeProgress = Math.max(0, Math.min(1, (this.radius - 10) / 115));
-      this.speed = Math.max(0.72, 2.618 - sizeProgress * 1.898);
+      this.speed = Math.max(0.72, 2.356 - sizeProgress * 1.636);
 
       // 小体型的鱼上下摆动幅度减少 50% (乘以 0.5)，大鱼摆动更小
       this.wobbleFactor = Math.max(0.015, Math.pow(16 / Math.max(16, this.radius), 2.0) * 0.5);
     } else {
-      // 玩家基础速度再提升 10% (从 3.68 提升至 4.05)，且恒定不变
-      this.speed = 4.05;
+      // 玩家基础速度降低 10% (从 4.05 降至 3.645)，且恒定不变
+      this.speed = 3.645;
       this.wobbleFactor = 1.0;
     }
 
@@ -425,8 +425,8 @@ class PlayerFish extends Fish {
     this.radius = Math.max(this.radius, this.tierConfig.minRadius);
     this.exp = 0;
     this.expToNext = Math.round(this.expToNext * 1.8);
-    // 玩家速度始终保持再次提升后的恒定速度 (4.05)，不随体型与进阶衰减
-    this.speed = 4.05;
+    // 玩家速度始终保持恒定速度 (3.645)，不随体型与进阶衰减
+    this.speed = 3.645;
   }
 
   control(targetX, targetY, isSprintRequested) {
