@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#030c1e">
+  <title>大鱼吃小鱼 - Ocean Frenzy</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Top HUD -->
+    <header id="hud">
+      <div class="hud-left">
+        <div class="hud-card player-level-card">
+          <span class="hud-label">阶段</span>
+          <span id="playerStage" class="hud-value">幼鱼 (Lv.1)</span>
+        </div>
+        <div class="hud-card exp-card">
+          <div class="hud-card-header">
+            <span class="hud-label">成长进度</span>
+            <span id="expText" class="hud-sub">0 / 100</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="expBar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="hud-card score-card">
+          <span class="hud-label">积分</span>
+          <span id="scoreVal" class="hud-value">0</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="hud-card size-card">
+          <span class="hud-label">体长</span>
+          <span id="sizeVal" class="hud-value">28 cm</span>
+        </div>
+        <button id="btnFullscreen" class="icon-btn" title="全屏切换">⛶</button>
+        <button id="btnMute" class="icon-btn" title="静音切换">🔊</button>
+        <button id="btnPause" class="icon-btn" title="暂停 (P)">⏸</button>
+      </div>
+    </header>
+
+    <!-- Danger Indicators (rendered on UI layer) -->
+    <div id="dangerBanner" class="danger-banner hidden">⚠️ 巨型掠食者接近！</div>
+
+    <!-- Mobile Virtual Joystick (Left Hand) -->
+    <div id="joystickZone" class="joystick-zone">
+      <div id="joystickBase" class="joystick-base">
+        <div id="joystickThumb" class="joystick-thumb"></div>
+      </div>
+    </div>
+
+    <!-- Mobile Sprint Button (Right Hand) -->
+    <button id="btnSprintMobile" class="mobile-sprint-btn" title="长按极速冲刺">
+      <span class="sprint-icon">⚡</span>
+      <span class="sprint-text">冲刺</span>
+    </button>
+
+    <!-- Start Overlay -->
+    <div id="startOverlay" class="modal-overlay">
+      <div class="modal-content glass-card">
+        <div class="title-badge">OCEAN ADVENTURE</div>
+        <h1 class="game-title">大鱼吃小鱼</h1>
+        <p class="subtitle">弱肉强食的海底世界，吞噬猎物，进化成为深海霸主！</p>
+        
+        <div class="controls-guide">
+          <div class="control-item">
+            <span class="key-tag">电脑 PC</span>
+            <p>鼠标移动 或 W A S D 控制方向；左键 / 空格键冲刺</p>
+          </div>
+          <div class="control-item">
+            <span class="key-tag">手机 / 平板</span>
+            <p>左下角虚拟轮盘控制移动方向；右下角 ⚡ 按钮或双击冲刺</p>
+          </div>
+        </div>
+
+        <div class="rules-pills">
+          <div class="rule-pill safe">
+            <span class="dot"></span> 绿色光圈：可吞食
+          </div>
+          <div class="rule-pill danger">
+            <span class="dot"></span> 红色光圈：危险避让
+          </div>
+        </div>
+
+        <button id="btnStart" class="play-btn">开始潜入海底</button>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div id="pauseOverlay" class="modal-overlay hidden">
+      <div class="modal-content glass-card">
+        <h2>游戏暂停</h2>
+        <p>深海时间已凝固</p>
+        <div class="modal-actions">
+          <button id="btnResume" class="play-btn">继续游戏</button>
+          <button id="btnRestartFromPause" class="secondary-btn">重新开始</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameOverOverlay" class="modal-overlay hidden">
+      <div class="modal-content glass-card">
+        <div class="skull-icon">💀</div>
+        <h2 class="danger-title">你被大鱼吞噬了！</h2>
+        <p id="deathReason" class="subtitle">成为深海掠食者的腹中餐...</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">最终得分</span>
+            <span id="finalScore" class="stat-val">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">吞食数量</span>
+            <span id="finalFishEaten" class="stat-val">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">最大体长</span>
+            <span id="finalSize" class="stat-val">0 cm</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">存活时间</span>
+            <span id="finalTime" class="stat-val">00:00</span>
+          </div>
+        </div>
+
+        <button id="btnRestart" class="play-btn">再来一局</button>
+      </div>
+    </div>
+
+    <!-- Evolution Toast -->
+    <div id="evolutionToast" class="evolution-toast hidden">
+      <div class="toast-glow"></div>
+      <div class="toast-content">
+        <span class="toast-tag">进化蜕变</span>
+        <h3 id="evoTitle">进化成：黄金雀鲷</h3>
+      </div>
+    </div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="fish.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
